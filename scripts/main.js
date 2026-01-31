@@ -26,7 +26,14 @@ class GameLauncher {
         document.querySelectorAll('.game-btn:not(.level-btn)').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const gameType = e.target.dataset.game;
-                this.showDifficultySelect(gameType);
+                if (gameType === 'space-impact') {
+                    this.pendingGameType = gameType;
+                    this.dashboard.classList.add('hidden');
+                    this.dashboard.classList.remove('active');
+                    this.launchGame();
+                } else {
+                    this.showDifficultySelect(gameType);
+                }
             });
         });
 
@@ -72,7 +79,7 @@ class GameLauncher {
         this.difficultyScreen.classList.add('active');
     }
 
-    launchGame(difficultyIndex) {
+    launchGame(difficultyIndex = 1) {
         // Hide Difficulty Screen
         this.difficultyScreen.classList.add('hidden');
         this.difficultyScreen.classList.remove('active');
