@@ -1,5 +1,5 @@
 class SnakeGame {
-    constructor(canvas, onExitCallback) {
+    constructor(canvas, initialSpeed, onExitCallback) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.onExit = onExitCallback;
@@ -7,7 +7,7 @@ class SnakeGame {
         // Game Constants
         this.GRID_SIZE = 15; // 20x20 grid on a 300x300 canvas
         this.TILE_COUNT = this.canvas.width / this.GRID_SIZE;
-        this.BASE_SPEED = 1000 / 8; // ~8 FPS initially
+        this.BASE_SPEED = initialSpeed;
 
         // Game State
         this.snake = [];

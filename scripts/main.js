@@ -1,46 +1,77 @@
 class GameLauncher {
     constructor() {
         this.dashboard = document.getElementById('dashboard');
+        this.difficultyScreen = document.getElementById('difficulty-screen');
         this.snakeContainer = document.getElementById('snake-game');
+
         this.currentGame = null;
+        this.pendingGameType = null;
 
         this.startBtn = document.getElementById('btn-start');
+
+        // Difficulty Settings (Time in ms per frame)
+        this.difficulties = [
+            { label: 'EASY', speed: 150 },
+            { label: 'MED', speed: 125 },
+            { label: 'HARD', speed: 80 }
+        ];
 
         this.init();
     }
 
     init() {
-        // Setup Launcher Buttons (Click to play immediately)
-        document.querySelectorAll('.game-btn').forEach(btn => {
+        // Setup Launcher Buttons (Initial Game Selection)
+        document.querySelectorAll('.game-btn:not(.level-btn)').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const gameType = e.target.dataset.game;
-                this.launchGame(gameType);
+                this.showDifficultySelect(gameType);
             });
         });
 
-        // Setup 'Start' button to launch selected game if one is highlighted (Simulated selection)
-        // For now, if they are on dashboard and hit start, we launch Snake since it's the only one.
+        // Setup Level Selection Buttons
+        document.querySelectorAll('.level-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const levelIndex = parseInt(e.target.dataset.level);
+                this.launchGame(levelIndex);
+            });
+        });
+
+        // Setup 'Start' button
         if (this.startBtn) {
             this.startBtn.addEventListener('click', () => {
-                if (this.dashboard.classList.contains('active') && this.selectedGame) {
-                    this.launchGame(this.selectedGame);
+                if (this.dashboard.classList.contains('active')) {
+                    this.showDifficultySelect('snake');
                 }
             });
         }
     }
 
-    launchGame(gameType) {
-        if (gameType === 'snake') {
-            this.dashboard.classList.add('hidden');
-            this.dashboard.classList.remove('active');
+    showDifficultySelect(gameType) {
+        if (!gameType) return;
+        this.pendingGameType = gameType;
 
+        this.dashboard.classList.add('hidden');
+        this.dashboard.classList.remove('active');
+
+        this.difficultyScreen.classList.remove('hidden');
+        this.difficultyScreen.classList.add('active');
+    }
+
+    launchGame(difficultyIndex) {
+        // Hide Difficulty Screen
+        this.difficultyScreen.classList.add('hidden');
+        this.difficultyScreen.classList.remove('active');
+
+        if (this.pendingGameType === 'snake') {
             this.snakeContainer.classList.remove('hidden');
             this.snakeContainer.classList.add('active');
 
-            // Initialize Snake Game (Global Class)
+            // Initialize Snake Game
             if (typeof SnakeGame !== 'undefined') {
+                const speed = this.difficulties[difficultyIndex].speed;
                 this.currentGame = new SnakeGame(
                     document.getElementById('game-canvas'),
+                    speed,
                     this.onGameExit.bind(this)
                 );
             } else {
