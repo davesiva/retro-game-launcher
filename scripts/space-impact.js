@@ -19,7 +19,7 @@ class SpaceImpactGame {
             x: 20,
             y: this.canvas.height / 2,
             width: 25,
-            height: 12, // Adjusted for new sprite
+            height: 12,
             speed: 3
         };
 
@@ -27,7 +27,7 @@ class SpaceImpactGame {
         this.enemyBullets = [];
         this.enemies = [];
         this.debris = [];
-        this.terrain = []; // Array of cloud objects
+        this.terrain = [];
 
         this.lastFireTime = 0;
         this.fireRate = 250;
@@ -36,7 +36,7 @@ class SpaceImpactGame {
         this.enemySpawnRate = 2000;
 
         this.terrainSpawnTimer = 0;
-        this.terrainSpawnRate = 1200; // More frequent mounds
+        this.terrainSpawnRate = 1200;
 
         this.boss = null;
 
@@ -131,6 +131,7 @@ class SpaceImpactGame {
     }
 
     start() {
+        this.stop(); // Ensure any existing loop is cancelled
         this.reset();
         this.isActive = true;
         this.isPaused = false;
@@ -209,7 +210,10 @@ class SpaceImpactGame {
         if (!this.isActive) return;
         if (this.isPaused) return;
 
-        const dt = timestamp - this.lastTime;
+        let dt = timestamp - this.lastTime;
+        // Cap dt to prevent massive jumps on lag/tab switch
+        if (dt > 50) dt = 50;
+
         this.lastTime = timestamp;
 
         this.update(dt);
@@ -218,14 +222,16 @@ class SpaceImpactGame {
     }
 
     update(dt) {
+        // Delta Time Factor (Normalize to ~60fps)
+        const timeScale = dt / 16.67;
+
         // Player Move
-        if (this.keys.ArrowUp) this.player.y -= this.player.speed;
-        if (this.keys.ArrowDown) this.player.y += this.player.speed;
-        if (this.keys.ArrowLeft) this.player.x -= this.player.speed;
-        if (this.keys.ArrowRight) this.player.x += this.player.speed;
+        if (this.keys.ArrowUp) this.player.y -= this.player.speed * timeScale;
+        if (this.keys.ArrowDown) this.player.y += this.player.speed * timeScale;
+        if (this.keys.ArrowLeft) this.player.x -= this.player.speed * timeScale;
+        if (this.keys.ArrowRight) this.player.x += this.player.speed * timeScale;
 
         this.player.x = Math.max(0, Math.min(this.player.x, this.canvas.width - this.player.width));
-        // Clamp Bottom: Leave room for terrain (approx 30-40px high)
         this.player.y = Math.max(0, Math.min(this.player.y, this.canvas.height - this.player.height - 35));
 
         // Auto Fire
@@ -233,26 +239,27 @@ class SpaceImpactGame {
             this.bullets.push({
                 x: this.player.x + this.player.width,
                 y: this.player.y + this.player.height / 2 - 1,
-                w: 6, h: 2, speed: 6
+                w: 6, h: 2,
+                speed: 6 // Base speed
             });
             this.lastFireTime = performance.now();
         }
 
         this.updatePhases(dt);
-        this.updateTerrain(dt);
+        this.updateTerrain(dt, timeScale);
 
         // Update Bullets
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             let b = this.bullets[i];
-            b.x += b.speed;
+            b.x += b.speed * timeScale;
             if (b.x > this.canvas.width) this.bullets.splice(i, 1);
         }
 
         // Update Enemy Bullets
         for (let i = this.enemyBullets.length - 1; i >= 0; i--) {
             let b = this.enemyBullets[i];
-            b.x += b.vx;
-            b.y += b.vy;
+            b.x += b.vx * timeScale;
+            b.y += b.vy * timeScale;
 
             if (b.x < 0 || b.y < 0 || b.y > this.canvas.height) {
                 this.enemyBullets.splice(i, 1);
@@ -267,14 +274,14 @@ class SpaceImpactGame {
 
         // Update Boss
         if (this.boss) {
-            this.updateBoss(dt);
+            this.updateBoss(dt, timeScale);
         }
 
         // Update Enemies
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             let e = this.enemies[i];
-            e.x -= e.speed;
-            e.y += Math.sin(e.x * 0.05 + e.offset) * 0.5;
+            e.x -= e.speed * timeScale;
+            e.y += Math.sin(e.x * 0.05 + e.offset) * 0.5 * timeScale;
 
             if (this.checkBoxCollision(this.player, e)) {
                 this.handlePlayerHit();
@@ -296,52 +303,38 @@ class SpaceImpactGame {
             if (!hit && e.x + e.w < 0) this.enemies.splice(i, 1);
         }
 
-        // Update Debris with Terrain Interaction (Rolls along mounds)
+        // Update Debris
         for (let i = this.debris.length - 1; i >= 0; i--) {
             let d = this.debris[i];
 
-            d.vy += 0.08; // Gravity
-            d.x += d.vx;
-            d.y += d.vy;
-            d.rot += d.rotSpeed;
-            d.life--;
+            d.vy += 0.08 * timeScale; // Gravity
+            d.x += d.vx * timeScale;
+            d.y += d.vy * timeScale;
+            d.rot += d.rotSpeed * timeScale;
+            d.life -= 1 * timeScale;
 
             // TERRAIN COLLISION (Mounds)
             let onGround = false;
             for (let t of this.terrain) {
-                // Circle Collision Check (Mound is a semicircle)
-                const dx = d.x - (t.x + t.w / 2);
-                const dy = d.y - (t.y + t.h); // Bottom center of mound? No, mound is drawn from t.y up?
-                // Actually let's assume t.y is the top-left of the bounding box of the mound.
-                // Center of circle:
                 const cx = t.x + t.w / 2;
-                const cy = t.y + t.h; // The base y
+                const cy = t.y + t.h;
                 const radius = t.w / 2;
 
-                // Simple check: is debris within the x-range?
                 if (d.x >= t.x && d.x <= t.x + t.w) {
-                    // Height check - Mounds are roughly semicircles
-                    // Dist from center x
                     const distX = d.x - cx;
-                    // Height of mound at this x (semicircle formula)
-                    // y = sqrt(r^2 - x^2)
                     const moundHeight = Math.sqrt(Math.max(0, radius * radius - distX * distX));
                     const moundTopY = cy - moundHeight;
 
                     if (d.y + d.size / 2 >= moundTopY && d.y - d.size / 2 <= cy) {
-                        // Collision!
-                        // Push out
                         d.y = moundTopY - d.size / 2;
 
-                        // Roll logic: Modify VX based on slope
-                        // Slope at x: deriv of semicircle is -x / y
-                        const slope = -distX / moundHeight; // normalized
-                        d.vx += slope * 0.1; // Slide down
+                        const slope = -distX / moundHeight;
+                        d.vx += slope * 0.1 * timeScale;
 
-                        d.vy *= -0.3; // Bounce damping
-                        d.vx *= 0.9; // Friction
+                        d.vy *= -0.3;
+                        d.vx *= 0.9;
 
-                        d.x -= 0.5; // Stick to moving terrain
+                        d.x -= 0.5 * timeScale;
                         onGround = true;
                     }
                 }
@@ -355,11 +348,11 @@ class SpaceImpactGame {
         }
     }
 
-    updateTerrain(dt) {
+    updateTerrain(dt, timeScale) {
         // Move Terrain
         for (let i = this.terrain.length - 1; i >= 0; i--) {
             let t = this.terrain[i];
-            t.x -= 0.5;
+            t.x -= 0.5 * timeScale;
             if (t.x + t.w < 0) this.terrain.splice(i, 1);
         }
 
@@ -372,11 +365,9 @@ class SpaceImpactGame {
     }
 
     spawnTerrain(overrideX) {
-        // Procedural Mounds ("Hollow Bubbles")
         const w = 40 + Math.random() * 40;
         const h = w / 2; // Semicircle
         const x = overrideX !== undefined ? overrideX : this.canvas.width;
-        const y = this.canvas.height - h;
 
         this.terrain.push({
             x: x,
@@ -386,7 +377,6 @@ class SpaceImpactGame {
         });
     }
 
-    // ... Update Phases, Boss, etc (Same as before) ...
     updatePhases(dt) {
         if (this.phase === 'boss_fight') return;
         if (this.killedCount >= 50 && this.phase !== 'boss_warning' && this.phase !== 'boss_fight') {
@@ -399,6 +389,7 @@ class SpaceImpactGame {
             this.enemySpawnRate = 1000;
         }
         if (this.phase === 'boss_warning') return;
+
         this.enemySpawnTimer += dt;
         if (this.enemySpawnTimer > this.enemySpawnRate) {
             this.spawnEnemy();
@@ -413,7 +404,7 @@ class SpaceImpactGame {
             x: this.canvas.width,
             y: Math.random() * (this.canvas.height - 100) + 20,
             w: 22, h: 16,
-            speed: (Math.random() * 1.5 + 1.5) * speedMult,
+            speed: (Math.random() * 1.5 + 1.5) * speedMult, // Base speed
             type: type,
             offset: Math.random() * 10
         });
@@ -427,21 +418,22 @@ class SpaceImpactGame {
             w: 80, h: 80,
             hp: 20,
             maxHp: 20,
-            vy: 1,
+            vy: 1, // Base Vy
             state: 'entering',
             attackTimer: 0
         };
     }
 
-    updateBoss(dt) {
+    updateBoss(dt, timeScale) {
         const boss = this.boss;
         if (!boss) return;
         if (boss.state === 'entering') {
-            boss.x -= 0.5;
+            boss.x -= 0.5 * timeScale;
             if (boss.x < this.canvas.width - 100) boss.state = 'idle';
         } else {
-            boss.y += boss.vy;
+            boss.y += boss.vy * timeScale;
             if (boss.y < 10 || boss.y > this.canvas.height - boss.h - 50) boss.vy *= -1;
+
             boss.attackTimer += dt;
             if (boss.attackTimer > 2000) {
                 this.bossAttack();
@@ -470,7 +462,7 @@ class SpaceImpactGame {
             this.enemyBullets.push({
                 x: startX,
                 y: startY,
-                vx: -4 * Math.cos(angle),
+                vx: -4 * Math.cos(angle), // Base velocity
                 vy: 4 * Math.sin(angle),
                 w: 6, h: 6
             });
@@ -550,6 +542,7 @@ class SpaceImpactGame {
     }
 
     draw() {
+        // Clear
         this.ctx.fillStyle = '#c7f0d8';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = '#43523d';
@@ -583,50 +576,27 @@ class SpaceImpactGame {
 
         for (let t of this.terrain) {
             const cx = t.x + t.w / 2;
-            const cy = t.y + t.h; // Base y (bottom of screen approx)
+            const cy = t.y + t.h;
             const r = t.w / 2;
 
-            // Draw Hollow Mound (Semicircle)
             this.ctx.beginPath();
             this.ctx.arc(cx, cy, r, Math.PI, 0);
-            // Don't close bottom, looks like a hill line
             this.ctx.stroke();
-
-            // Optional: Inner detail to show it's "Empty"
-            // maybe a small dot or pixel
         }
     }
 
     drawJet(x, y) {
         const ctx = this.ctx;
-        // Forked Tail Player Ship - Pixel Art
-        // Dart shape, Nose right, Tail split Top/Bottom
-
-        const S = 2; // pixel scale (2x2 rects)
-
-        // Helper to draw 'pixel'
+        const S = 2;
         const p = (dx, dy) => ctx.fillRect(x + dx * S, y + dy * S, S, S);
         const rect = (dx, dy, w, h) => ctx.fillRect(x + dx * S, y + dy * S, w * S, h * S);
 
-        // Body (Main Center Fuselage)
-        rect(4, 2, 6, 3); // Center bulk
-
-        // Nose (Single pixel line right)
-        rect(10, 3, 2, 1); // Tip
-
-        // Wings/Body Slope
-        p(3, 1); p(3, 5); // Widening back
-
-        // The FORKED TAIL (Sideways 'U')
-        // Top Prong
+        rect(4, 2, 6, 3);
+        rect(10, 3, 2, 1);
+        p(3, 1); p(3, 5);
         rect(0, 0, 3, 2);
-        // Bottom Prong
         rect(0, 5, 3, 2);
-
-        // Connect Prongs to Body
         p(3, 2); p(3, 4);
-
-        // Gap is at y=2..4 ish (visual)
     }
 
     drawBoss(b) {

@@ -105,6 +105,10 @@ class GameLauncher {
 
             // Initialize Space Impact
             if (typeof SpaceImpactGame !== 'undefined') {
+                if (this.currentGame) {
+                    this.currentGame.destroy();
+                    this.currentGame = null;
+                }
                 this.currentGame = new SpaceImpactGame(
                     'si-game-canvas',
                     { onGameExit: this.onGameExit.bind(this) }
