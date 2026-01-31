@@ -94,6 +94,7 @@ class GameLauncher {
                 this.currentGame = new SnakeGame(
                     document.getElementById('game-canvas'),
                     speed,
+                    difficultyIndex,
                     this.onGameExit.bind(this)
                 );
             } else {

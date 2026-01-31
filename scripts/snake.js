@@ -1,5 +1,5 @@
 class SnakeGame {
-    constructor(canvas, initialSpeed, onExitCallback) {
+    constructor(canvas, initialSpeed, difficultyLevel, onExitCallback) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.onExit = onExitCallback;
@@ -8,6 +8,7 @@ class SnakeGame {
         this.GRID_SIZE = 15; // 20x20 grid on a 300x300 canvas
         this.TILE_COUNT = this.canvas.width / this.GRID_SIZE;
         this.BASE_SPEED = initialSpeed;
+        this.DIFFICULTY = difficultyLevel; // 0=Easy, 1=Med, 2=Hard, 3=Very Hard
 
         // Game State
         this.snake = [];
@@ -16,7 +17,9 @@ class SnakeGame {
         this.dy = 0;
         this.nextDx = 0;
         this.nextDy = 0;
+        this.nextDy = 0;
         this.score = 0;
+        this.lives = 3;
         this.highScore = localStorage.getItem('snake-highscore') || 0;
         this.loopId = null;
         this.lastTime = 0;
@@ -52,6 +55,7 @@ class SnakeGame {
         this.nextDy = -1;
 
         this.score = 0;
+        this.lives = 3;
         this.updateScoreDisplay();
         this.placeFood();
         this.isGameOver = false;
@@ -210,16 +214,28 @@ class SnakeGame {
 
         const head = { x: this.snake[0].x + this.dx, y: this.snake[0].y + this.dy };
 
-        // Wrap Around Logic (Snake II style)
-        if (head.x < 1) head.x = this.TILE_COUNT - 2;
-        else if (head.x >= this.TILE_COUNT - 1) head.x = 1;
+        // Wrap Around Logic vs Solid Walls
+        // Difficulties 0 (Easy) and 1 (Medium) wrap.
+        // Difficulties 2 (Hard) and 3 (Very Hard) are solid walls.
+        if (this.DIFFICULTY >= 2) {
+            // Solid Walls - Collision Check
+            if (head.x < 1 || head.x >= this.TILE_COUNT - 1 ||
+                head.y < 1 || head.y >= this.TILE_COUNT - 1) {
+                this.handleDeath();
+                return;
+            }
+        } else {
+            // Wrapping Logic
+            if (head.x < 1) head.x = this.TILE_COUNT - 2;
+            else if (head.x >= this.TILE_COUNT - 1) head.x = 1;
 
-        if (head.y < 1) head.y = this.TILE_COUNT - 2;
-        else if (head.y >= this.TILE_COUNT - 1) head.y = 1;
+            if (head.y < 1) head.y = this.TILE_COUNT - 2;
+            else if (head.y >= this.TILE_COUNT - 1) head.y = 1;
+        }
 
         // Self Collision
         if (this.snake.some(segment => segment.x === head.x && segment.y === head.y)) {
-            this.gameOver();
+            this.handleDeath();
             return;
         }
 
@@ -244,16 +260,35 @@ class SnakeGame {
 
         this.ctx.fillStyle = '#1f1f1f'; // Dark Pixel Color
 
-        // Draw Border (The "usable space") - Thinner dots
-        // Top and Bottom
-        for (let x = 0; x < this.TILE_COUNT; x++) {
-            this.drawBorderPixel(x, 0);
-            this.drawBorderPixel(x, this.TILE_COUNT - 1);
-        }
-        // Left and Right
-        for (let y = 0; y < this.TILE_COUNT; y++) {
-            this.drawBorderPixel(0, y);
-            this.drawBorderPixel(this.TILE_COUNT - 1, y);
+        // Draw Border
+        if (this.DIFFICULTY >= 2) {
+            // Solid Walls (Hard/Very Hard) - Draw 4 continuous lines for clean corners
+            const size = this.GRID_SIZE;
+            // Same thickness as dots: ~1/3 of grid size
+            const thickness = Math.max(2, Math.floor(size / 3));
+            const offset = (size - thickness) / 2;
+
+            // Top Long (Start at offset, End at width-offset)
+            this.ctx.fillRect(offset, offset, this.canvas.width - offset * 2, thickness);
+            // Bottom Long
+            this.ctx.fillRect(offset, this.canvas.height - offset - thickness, this.canvas.width - offset * 2, thickness);
+            // Left Long (Start at offset, End at height-offset)
+            this.ctx.fillRect(offset, offset, thickness, this.canvas.height - offset * 2);
+            // Right Long
+            this.ctx.fillRect(this.canvas.width - offset - thickness, offset, thickness, this.canvas.height - offset * 2);
+
+        } else {
+            // Dotted Walls (Easy/Medium)
+            // Top and Bottom
+            for (let x = 0; x < this.TILE_COUNT; x++) {
+                this.drawBorderPixel(x, 0);
+                this.drawBorderPixel(x, this.TILE_COUNT - 1);
+            }
+            // Left and Right
+            for (let y = 0; y < this.TILE_COUNT; y++) {
+                this.drawBorderPixel(0, y);
+                this.drawBorderPixel(this.TILE_COUNT - 1, y);
+            }
         }
 
         // Draw Food
@@ -317,6 +352,20 @@ class SnakeGame {
         this.ctx.fillRect(px, py, size, size);
     }
 
+    drawBorderLine(x, y, isVertical) {
+        const size = this.GRID_SIZE;
+        // Same thickness as dots: ~1/3 of grid size
+        const thickness = Math.max(2, Math.floor(size / 3));
+        const offset = (size - thickness) / 2;
+
+        if (isVertical) {
+            // Full height, centered width
+            this.ctx.fillRect(x * size + offset, y * size, thickness, size);
+        } else {
+            // Full width, centered height
+            this.ctx.fillRect(x * size, y * size + offset, size, thickness);
+        }
+    }
     drawBorderPixel(x, y) {
         // Smaller dot for border (thinner look)
         // Center a small square in the grid cell
@@ -331,11 +380,23 @@ class SnakeGame {
         this.ctx.fillRect(px, py, dotSize, dotSize);
     }
 
+    drawBorderSolid(x, y) {
+        const size = this.GRID_SIZE;
+        this.ctx.fillRect(x * size, y * size, size, size);
+    }
+
     updateScoreDisplay() {
         const scoreEl = document.getElementById('score');
         const hiScoreEl = document.getElementById('high-score');
+        const livesEl = document.getElementById('lives-display');
 
         if (scoreEl) scoreEl.innerText = `Score: ${this.score}`;
+        if (livesEl) {
+            let hearts = "";
+            for (let i = 0; i < this.lives; i++) hearts += "♥";
+            livesEl.innerText = `${hearts}`;
+        }
+
 
         const startHiScale = parseInt(this.highScore);
         if (this.score > startHiScale) {
@@ -344,6 +405,31 @@ class SnakeGame {
         }
 
         if (hiScoreEl) hiScoreEl.innerText = `Hi: ${this.highScore}`;
+    }
+
+    handleDeath() {
+        this.lives--;
+        this.updateScoreDisplay();
+
+        if (this.lives > 0) {
+            // Reset Snake Position but keep score/food
+            const startX = Math.floor(this.TILE_COUNT / 2);
+            const startY = Math.floor(this.TILE_COUNT / 2);
+            this.snake = [
+                { x: startX, y: startY },
+                { x: startX, y: startY + 1 },
+                { x: startX, y: startY + 2 }
+            ];
+            this.dx = 0;
+            this.dy = -1;
+            this.nextDx = 0;
+            this.nextDy = -1;
+            this.inputProcessed = false;
+
+            // Brief pause or visual feedback could go here
+        } else {
+            this.gameOver();
+        }
     }
 
     gameOver() {
