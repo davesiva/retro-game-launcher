@@ -13,7 +13,8 @@ class GameLauncher {
         this.difficulties = [
             { label: 'EASY', speed: 150 },
             { label: 'MED', speed: 125 },
-            { label: 'HARD', speed: 80 }
+            { label: 'HARD', speed: 80 },
+            { label: 'V. HARD', speed: 50 }
         ];
 
         this.init();
