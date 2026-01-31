@@ -1,0 +1,284 @@
+:root {
+    --nokia-bg: #c4d600;
+    /* Classic Nokia Yellow-Green */
+    --nokia-fg: #1f1f1f;
+    /* Dark Pixel Color */
+    --case-color: #333333;
+    --screen-bezel: #999999;
+    --pixel-size: 4px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'VT323', monospace;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body {
+    background-color: #202020;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    color: var(--nokia-fg);
+}
+
+#retro-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px;
+}
+
+#phone-case {
+    background-color: #1a3c6e;
+    /* Classic Nokia Blue-ish Grey */
+    border-radius: 30px 30px 40px 40px;
+    padding: 30px 20px 40px 20px;
+    box-shadow: inset -5px -5px 15px rgba(0, 0, 0, 0.5), 5px 10px 20px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 4px solid #11284a;
+}
+
+#screen-bezel {
+    background-color: #888;
+    padding: 15px 15px;
+    border-radius: 10px 10px 20px 20px;
+    border: 2px solid #555;
+    width: 100%;
+    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.3);
+    margin-bottom: 20px;
+}
+
+#screen-content {
+    background-color: var(--nokia-bg);
+    width: 100%;
+    aspect-ratio: 1/1;
+    /* Square screen typical of Snake */
+    border: 2px solid #364231;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Scanline Effect */
+#screen-content::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(transparent 0,
+            transparent 2px,
+            rgba(0, 0, 0, 0.05) 3px);
+    pointer-events: none;
+}
+
+.screen-view {
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Dashboard */
+#dashboard {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+#dashboard h1 {
+    font-size: 3rem;
+    margin-bottom: 0px;
+    letter-spacing: 2px;
+}
+
+#dashboard h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--nokia-fg);
+    width: 80%;
+}
+
+.game-btn {
+    background: none;
+    border: 2px solid var(--nokia-fg);
+    font-family: inherit;
+    font-size: 1.5rem;
+    padding: 5px 15px;
+    cursor: pointer;
+    text-transform: uppercase;
+    width: 100%;
+    font-weight: bold;
+}
+
+.game-btn:hover,
+.game-btn:focus,
+.game-btn.selected {
+    background-color: var(--nokia-fg);
+    color: var(--nokia-bg);
+}
+
+#game-list {
+    list-style: none;
+    width: 100%;
+}
+
+/* Snake Game */
+#snake-game {
+    padding: 0;
+}
+
+#game-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 5px;
+    border-bottom: 2px solid var(--nokia-fg);
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+#game-canvas {
+    width: 100%;
+    /* Use flex-grow + min-height trick to keep it inside the flex container without overflowing */
+    flex-grow: 1;
+    min-height: 0;
+    object-fit: contain;
+    /* Ensures the square canvas aspect ratio is preserved inside the rectangular flex space */
+    image-rendering: pixelated;
+    background-color: var(--nokia-bg);
+}
+
+#game-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(67, 82, 61, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 10;
+}
+
+#overlay-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+    width: 80%;
+}
+
+.overlay-btn {
+    background: transparent;
+    border: 2px solid var(--nokia-fg);
+    color: var(--nokia-fg);
+    /* Dark text on transparent BG (which is over yellow screen) */
+    /* But wait, the overlay background is dark solid rgba(67, 82, 61, 0.8) which is dark green. 
+       The nokia-fg is dark gray/black. 
+       Let's ensure readability. */
+    background-color: var(--nokia-bg);
+    /* Use screen color for button BG */
+    font-family: 'VT323', monospace;
+    font-size: 1.5rem;
+    padding: 5px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: bold;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+}
+
+.overlay-btn:active {
+    transform: translateY(2px);
+    box-shadow: none;
+}
+
+/* Controls */
+#controls-area {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#d-pad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.key {
+    background: #e0e0e0;
+    border: none;
+    border-bottom: 4px solid #b0b0b0;
+    border-radius: 10px 5px 15px 5px;
+    /* Weird nokia shape */
+    width: 60px;
+    height: 40px;
+    margin: 5px;
+    font-family: sans-serif;
+    font-weight: bold;
+    color: #333;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    /* Centering text */
+    justify-content: center;
+    align-items: center;
+}
+
+.key:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
+}
+
+.row-2 {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Specific button styling to look more like keypad */
+#btn-action {
+    background: #ddd;
+}
+
+.extra-controls {
+    display: flex;
+    justify-content: space-between;
+    width: 80%;
+}
+
+.func-key {
+    background: #cfcfcf;
+    border: none;
+    border-bottom: 3px solid #999;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+}
+
+.func-key:active {
+    transform: translateY(2px);
+    border-bottom-width: 1px;
+}

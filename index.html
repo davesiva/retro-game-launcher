@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Retro Game Launcher</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="retro-container">
+        <!-- Phone Case / Bezel -->
+        <div id="phone-case">
+            <div id="screen-bezel">
+                <div id="screen-content">
+                    <!-- Dashboard -->
+                    <div id="dashboard" class="screen-view active">
+                        <h1>NOKIA</h1>
+                        <h2>GAMES</h2>
+                        <ul id="game-list">
+                            <li><button class="game-btn" data-game="snake">Snake II</button></li>
+                            <!-- More games in future -->
+                        </ul>
+                    </div>
+
+                    <!-- Snake Game Container -->
+                    <div id="snake-game" class="screen-view hidden">
+                        <div id="game-header">
+                            <div id="score">Score: 0</div>
+                            <div id="high-score">Hi: 0</div>
+                        </div>
+                        <canvas id="game-canvas" width="300" height="300"></canvas>
+                        <div id="game-overlay" class="hidden">
+                            <h2 id="overlay-msg">GAME OVER</h2>
+                            <div id="overlay-options">
+                                <button id="menu-resume" class="overlay-btn">Resume</button>
+                                <button id="menu-restart" class="overlay-btn">Restart</button>
+                                <button id="menu-quit" class="overlay-btn">Quit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls (Touch/Keypad Visuals) -->
+            <div id="controls-area">
+                <div id="d-pad">
+                    <button class="key row-1" id="btn-up" aria-label="Up">2</button>
+                    <div class="row-2">
+                        <button class="key" id="btn-left" aria-label="Left">4</button>
+                        <button class="key" id="btn-action" aria-label="Action">5</button>
+                        <button class="key" id="btn-right" aria-label="Right">6</button>
+                    </div>
+                    <button class="key row-3" id="btn-down" aria-label="Down">8</button>
+                </div>
+                <div class="extra-controls">
+                    <button id="btn-start" class="func-key">Start</button>
+                    <button id="btn-pause" class="func-key">Pause</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/snake.js"></script>
+    <script src="scripts/main.js"></script>
+</body>
+
+</html>
