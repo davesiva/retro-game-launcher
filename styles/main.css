@@ -282,3 +282,64 @@ body {
     transform: translateY(2px);
     border-bottom-width: 1px;
 }
+
+/* Status Indicators */
+.status-indicators {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 4px;
+    height: 70%;
+    z-index: 5;
+    padding: 0 4px;
+}
+
+#status-bar-left {
+    left: 0;
+    align-items: flex-start;
+}
+
+#status-bar-right {
+    right: 0;
+    align-items: flex-end;
+}
+
+.signal-bar,
+.battery-bar {
+    background-color: var(--nokia-fg);
+    /* #1f1f1f */
+    width: 6px;
+}
+
+/* Signal Bars (Left) - Rising Stairs */
+.signal-bar.bar-1 {
+    height: 20%;
+    width: 8px;
+}
+
+.signal-bar.bar-2 {
+    height: 40%;
+    width: 8px;
+}
+
+.signal-bar.bar-3 {
+    height: 60%;
+    width: 8px;
+}
+
+.signal-bar.bar-4 {
+    height: 80%;
+    width: 8px;
+}
+
+/* Battery Bars (Right) - Blocky Stack */
+.battery-bar {
+    height: 15%;
+    /* Equal height blocks */
+    width: 12px;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+}

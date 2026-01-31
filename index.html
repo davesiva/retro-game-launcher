@@ -21,7 +21,7 @@
                         <h2>GAMES</h2>
                         <ul id="game-list">
                             <li><button class="game-btn" data-game="snake">Snake II</button></li>
-                            <!-- More games in future -->
+                            <li><button class="game-btn" data-game="space-impact">Space Impact</button></li>
                         </ul>
                     </div>
 
@@ -33,6 +33,8 @@
                             <button class="game-btn level-btn" data-level="1">Medium</button>
                             <button class="game-btn level-btn" data-level="2">Hard</button>
                             <button class="game-btn level-btn" data-level="3">Very Hard</button>
+                            <button class="game-btn" id="btn-back-difficulty"
+                                style="margin-top: 25px; border-top: 2px solid var(--nokia-fg); padding-top: 5px;">Back</button>
                         </div>
                     </div>
 
@@ -49,6 +51,24 @@
                                 <button id="menu-resume" class="overlay-btn">Resume</button>
                                 <button id="menu-restart" class="overlay-btn">Restart</button>
                                 <button id="menu-quit" class="overlay-btn">Quit</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Space Impact Game Container -->
+                    <div id="space-impact-game" class="screen-view hidden">
+                        <div id="si-game-header"
+                            style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px;">
+                            <div id="si-lives">♥♥♥</div>
+                            <div id="si-score">0</div>
+                        </div>
+                        <canvas id="si-game-canvas" width="300" height="300"></canvas>
+                        <div id="si-game-overlay" class="hidden"
+                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(199, 240, 216, 0.9); display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                            <h2 id="si-overlay-msg">GAME OVER</h2>
+                            <div id="si-overlay-options">
+                                <button id="si-menu-restart" class="overlay-btn">Restart</button>
+                                <button id="si-menu-quit" class="overlay-btn">Quit</button>
                             </div>
                         </div>
                     </div>
@@ -75,6 +95,7 @@
     </div>
 
     <script src="scripts/snake.js"></script>
+    <script src="scripts/space-impact.js"></script>
     <script src="scripts/main.js"></script>
 </body>
 

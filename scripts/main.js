@@ -3,6 +3,7 @@ class GameLauncher {
         this.dashboard = document.getElementById('dashboard');
         this.difficultyScreen = document.getElementById('difficulty-screen');
         this.snakeContainer = document.getElementById('snake-game');
+        this.spaceImpactContainer = document.getElementById('space-impact-game');
 
         this.currentGame = null;
         this.pendingGameType = null;
@@ -37,12 +38,25 @@ class GameLauncher {
             });
         });
 
-        // Setup 'Start' button
         if (this.startBtn) {
             this.startBtn.addEventListener('click', () => {
-                if (this.dashboard.classList.contains('active')) {
-                    this.showDifficultySelect('snake');
+                if (this.dashboard.classList.contains('active') && this.pendingGameType) {
+                    this.showDifficultySelect(this.pendingGameType);
                 }
+            });
+        }
+
+        // Back Button in Difficulty Screen
+        const btnBackDiff = document.getElementById('btn-back-difficulty');
+        if (btnBackDiff) {
+            btnBackDiff.addEventListener('click', () => {
+                this.difficultyScreen.classList.add('hidden');
+                this.difficultyScreen.classList.remove('active');
+
+                this.dashboard.classList.remove('hidden');
+                this.dashboard.classList.add('active');
+
+                this.pendingGameType = null;
             });
         }
     }
@@ -78,6 +92,20 @@ class GameLauncher {
             } else {
                 console.error("SnakeGame class not found!");
             }
+        } else if (this.pendingGameType === 'space-impact') {
+            this.spaceImpactContainer.classList.remove('hidden');
+            this.spaceImpactContainer.classList.add('active');
+
+            // Initialize Space Impact
+            if (typeof SpaceImpactGame !== 'undefined') {
+                this.currentGame = new SpaceImpactGame(
+                    'si-game-canvas',
+                    { onGameExit: this.onGameExit.bind(this) }
+                );
+                this.currentGame.start();
+            } else {
+                console.error("SpaceImpactGame class not found!");
+            }
         }
     }
 
@@ -89,6 +117,9 @@ class GameLauncher {
 
         this.snakeContainer.classList.add('hidden');
         this.snakeContainer.classList.remove('active');
+
+        this.spaceImpactContainer.classList.add('hidden');
+        this.spaceImpactContainer.classList.remove('active');
 
         this.dashboard.classList.remove('hidden');
         this.dashboard.classList.add('active');
